@@ -2,6 +2,12 @@
 
 import { useEffect, useRef, useState } from "react";
 import shaka from "shaka-player/dist/shaka-player.compiled";
+import {
+  PlayIcon,
+  PauseIcon,
+  SpeakerWaveIcon,
+  ArrowsPointingOutIcon,
+} from "@heroicons/react/24/solid";
 
 function VideoPlayer({ src }) {
   const videoRef = useRef(null);
@@ -46,11 +52,8 @@ function VideoPlayer({ src }) {
 
       const video = videoRef.current;
       if (video) {
-        // Update currentTime
         const timeUpdate = () => setCurrentTime(video.currentTime);
         video.addEventListener("timeupdate", timeUpdate);
-
-        // Set duration
         video.addEventListener("loadedmetadata", () =>
           setDuration(video.duration)
         );
@@ -64,77 +67,83 @@ function VideoPlayer({ src }) {
     return () => playerRef.current?.destroy();
   }, [src]);
 
+  const togglePlay = () => {
+    if (!videoRef.current) return;
+    if (videoRef.current.paused) {
+      videoRef.current.play();
+      setIsPlaying(true);
+    } else {
+      videoRef.current.pause();
+      setIsPlaying(false);
+    }
+  };
+
+  const handleVolumeChange = (e) => {
+    const vol = parseFloat(e.target.value);
+    setVolume(vol);
+    if (videoRef.current) videoRef.current.volume = vol;
+  };
+
+  const handleFullscreen = () => {
+    if (!videoRef.current) return;
+    if (document.fullscreenElement) {
+      document.exitFullscreen();
+    } else {
+      videoRef.current.requestFullscreen();
+    }
+  };
+
   return (
     <div className="space-y-4 max-w-4xl mx-auto">
-      {/* Video Player */}
+      {/* Video */}
       <video
         ref={videoRef}
-        controls={false} // میخوایم کنترل خودمون باشه
+        controls={false}
         className="w-full bg-black rounded"
       />
 
-      {/* Timeline */}
-      <input
-        type="range"
-        min="0"
-        max={duration}
-        step="0.1"
-        value={currentTime}
-        onChange={(e) => {
-          const time = parseFloat(e.target.value);
-          setCurrentTime(time);
-          if (videoRef.current) videoRef.current.currentTime = time;
-        }}
-        className="w-full"
-      />
+      {/* Progress Bar */}
+      <div className="relative w-full h-2 bg-gray-300 rounded">
+        <div
+          className="absolute top-0 left-0 h-2 bg-purple-600 rounded"
+          style={{ width: `${(currentTime / duration) * 100}%` }}
+        ></div>
+      </div>
 
       {/* Controls */}
-      <div className="flex items-center space-x-4">
-        {/* Play / Pause */}
+      <div className="flex justify-between items-center space-x-4">
+        {/* Play/Pause */}
         <button
-          className="px-4 py-2 bg-purple-600 text-white rounded"
-          onClick={() => {
-            if (!videoRef.current) return;
-            if (videoRef.current.paused) {
-              videoRef.current.play();
-              setIsPlaying(true);
-            } else {
-              videoRef.current.pause();
-              setIsPlaying(false);
-            }
-          }}
+          onClick={togglePlay}
+          className="p-2 bg-purple-600 text-white rounded"
         >
-          {isPlaying ? "Pause" : "Play"}
+          {isPlaying ? (
+            <PauseIcon className="w-5 h-5" />
+          ) : (
+            <PlayIcon className="w-5 h-5" />
+          )}
         </button>
 
         {/* Volume */}
-        <input
-          type="range"
-          min="0"
-          max="1"
-          step="0.01"
-          value={volume}
-          onChange={(e) => {
-            const vol = parseFloat(e.target.value);
-            setVolume(vol);
-            if (videoRef.current) videoRef.current.volume = vol;
-          }}
-          className="w-32"
-        />
+        <div className="flex items-center space-x-2 w-32">
+          <SpeakerWaveIcon className="w-5 h-5 text-gray-700" />
+          <input
+            type="range"
+            min="0"
+            max="1"
+            step="0.01"
+            value={volume}
+            onChange={handleVolumeChange}
+            className="w-full accent-purple-600"
+          />
+        </div>
 
         {/* Fullscreen */}
         <button
-          className="px-4 py-2 bg-gray-700 text-white rounded"
-          onClick={() => {
-            if (!videoRef.current) return;
-            if (document.fullscreenElement) {
-              document.exitFullscreen();
-            } else {
-              videoRef.current.requestFullscreen();
-            }
-          }}
+          onClick={handleFullscreen}
+          className="p-2 bg-gray-700 text-white rounded"
         >
-          Fullscreen
+          <ArrowsPointingOutIcon className="w-5 h-5" />
         </button>
       </div>
 
